@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -20,14 +20,14 @@ export default function App() {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   const {
-    data = { results: [], page: 1, total_pages: 0 }, 
+    data = { results: [], page: 1, total_pages: 0 },
     isLoading,
     isError,
   } = useQuery<TmdbResponse, Error>({
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
-    enabled: !!query, 
-    placeholderData: (prev) => prev, 
+    enabled: !!query,
+    placeholderData: (prev) => prev,
   });
 
   const handleSearch = (newQuery: string) => {
@@ -43,6 +43,12 @@ export default function App() {
     setSelectedMovie(null);
   };
 
+  useEffect(() => {
+    if (!isLoading && !isError && query && data.results.length === 0) {
+      toast.error("No movies found for your request.");
+    }
+  }, [isLoading, isError, data.results.length, query]);
+
   return (
     <div>
       <SearchBar onSubmit={handleSearch} />
@@ -50,9 +56,11 @@ export default function App() {
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
 
-      {!isLoading && !isError && data.results.length === 0 && query && (
-        toast.error("No movies found for your request.")
-      )}
+      {!isLoading &&
+        !isError &&
+        data.results.length === 0 &&
+        query &&
+        toast.error("No movies found for your request.")}
 
       {!isLoading && !isError && data.results.length > 0 && (
         <>
