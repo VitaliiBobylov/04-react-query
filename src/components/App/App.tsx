@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import ReactPaginate from "react-paginate";
 
 import SearchBar from "../SearchBar/SearchBar";
@@ -20,14 +20,13 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const queryOptions: UseQueryOptions<TmdbResponse, Error> = {
-    queryKey: ["movies", query, page],
-    queryFn: () => fetchMovies(query, page),
-    enabled: !!query,
-    keepPreviousData: true,
-  };
-
-  const { data, isLoading, isError, isSuccess } = useQuery(queryOptions);
+  const { data, isLoading, isError, isSuccess } = useQuery<TmdbResponse, Error>(
+    {
+      queryKey: ["movies", query, page],
+      queryFn: () => fetchMovies(query, page),
+      enabled: !!query,
+    }
+  );
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
