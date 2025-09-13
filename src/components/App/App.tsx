@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import ReactPaginate from "react-paginate";
 
 import SearchBar from "../SearchBar/SearchBar";
@@ -11,7 +11,8 @@ import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieModal from "../MovieModal/MovieModal";
 
 import { type Movie } from "../../types/movie";
-import { fetchMovies, type TmdbResponse } from "../../services/movieService";
+import { type TmdbResponse } from "../../types/tmdb";
+import { fetchMovies } from "../../services/movieService";
 import css from "./App.module.css";
 
 export default function App() {
@@ -19,16 +20,14 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const {
-    data = { results: [], page: 1, total_pages: 0 },
-    isLoading,
-    isError,
-  } = useQuery<TmdbResponse, Error>({
+  const queryOptions: UseQueryOptions<TmdbResponse, Error> = {
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query,
-    placeholderData: (prev) => prev,
-  });
+    keepPreviousData: true,
+  };
+
+  const { data, isLoading, isError, isSuccess } = useQuery(queryOptions);
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
@@ -44,10 +43,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!isLoading && !isError && query && data.results.length === 0) {
+    if (isSuccess && query && data?.results.length === 0) {
       toast.error("No movies found for your request.");
     }
-  }, [isLoading, isError, data.results.length, query]);
+  }, [isSuccess, query, data?.results.length]);
 
   return (
     <div>
@@ -56,13 +55,7 @@ export default function App() {
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
 
-      {!isLoading &&
-        !isError &&
-        data.results.length === 0 &&
-        query &&
-        toast.error("No movies found for your request.")}
-
-      {!isLoading && !isError && data.results.length > 0 && (
+      {isSuccess && data && data.results.length > 0 && (
         <>
           <MovieGrid movies={data.results} onSelect={handleSelect} />
 
@@ -85,7 +78,6 @@ export default function App() {
       {selectedMovie && (
         <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
       )}
-
       <Toaster position="top-right" />
     </div>
   );
