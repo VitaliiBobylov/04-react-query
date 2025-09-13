@@ -19,18 +19,30 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [prevData, setPrevData] = useState<TmdbResponse | null>(null);
 
-  const { data, isLoading, isError, isSuccess } = useQuery<TmdbResponse, Error>(
-    {
-      queryKey: ["movies", query, page],
-      queryFn: () => fetchMovies(query, page),
-      enabled: !!query,
+  const { data, isLoading, isError, isSuccess, isFetching } = useQuery<
+    TmdbResponse,
+    Error
+  >({
+    queryKey: ["movies", query, page],
+    queryFn: () => fetchMovies(query, page),
+    enabled: !!query,
+  });
+
+  const moviesData =
+    isFetching && prevData ? prevData : data ?? { results: [], total_pages: 0 };
+
+  useEffect(() => {
+    if (isSuccess && data) {
+      setPrevData(data);
     }
-  );
+  }, [data, isSuccess]);
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
     setPage(1);
+    setPrevData(null);
   };
 
   const handleSelect = (movie: Movie) => {
@@ -54,13 +66,13 @@ export default function App() {
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
 
-      {isSuccess && data && data.results.length > 0 && (
+      {moviesData.results.length > 0 && (
         <>
-          <MovieGrid movies={data.results} onSelect={handleSelect} />
+          <MovieGrid movies={moviesData.results} onSelect={handleSelect} />
 
-          {data.total_pages > 1 && (
+          {moviesData.total_pages > 1 && (
             <ReactPaginate
-              pageCount={data.total_pages}
+              pageCount={moviesData.total_pages}
               pageRangeDisplayed={5}
               marginPagesDisplayed={1}
               onPageChange={({ selected }) => setPage(selected + 1)}
