@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import ReactPaginate from "react-paginate";
 
 import SearchBar from "../SearchBar/SearchBar";
@@ -11,8 +11,7 @@ import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import MovieModal from "../MovieModal/MovieModal";
 
 import { type Movie } from "../../types/movie";
-import { type TmdbResponse } from "../../types/tmdb";
-import { fetchMovies } from "../../services/movieService";
+import { fetchMovies, type TmdbResponse } from "../../services/movieService";
 import css from "./App.module.css";
 
 export default function App() {
@@ -28,6 +27,7 @@ export default function App() {
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query,
+    placeholderData: keepPreviousData,
   });
 
   const moviesData =

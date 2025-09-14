@@ -1,5 +1,21 @@
 import axios from "axios";
-import type { TmdbResponse } from "../types/tmdb";
+
+export interface Movie {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  vote_average: number;
+}
+
+export interface TmdbResponse {
+  page: number;
+  results: Movie[];
+  total_pages: number;
+  total_results: number;
+}
 
 const axiosInstance = axios.create({
   baseURL: "https://api.themoviedb.org/3",
@@ -12,13 +28,8 @@ export async function fetchMovies(
   query: string,
   page: number = 1
 ): Promise<TmdbResponse> {
-  try {
-    const response = await axiosInstance.get<TmdbResponse>("/search/movie", {
-      params: { query, page },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch movies:", error);
-    throw new Error("Failed to fetch movies");
-  }
+  const response = await axiosInstance.get<TmdbResponse>("/search/movie", {
+    params: { query, page },
+  });
+  return response.data;
 }
