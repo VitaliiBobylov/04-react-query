@@ -18,31 +18,21 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [prevData, setPrevData] = useState<TmdbResponse | null>(null);
 
-  const { data, isLoading, isError, isSuccess, isFetching } = useQuery<
-    TmdbResponse,
-    Error
-  >({
-    queryKey: ["movies", query, page],
-    queryFn: () => fetchMovies(query, page),
-    enabled: !!query,
-    placeholderData: keepPreviousData,
-  });
-
-  const moviesData =
-    isFetching && prevData ? prevData : data ?? { results: [], total_pages: 0 };
-
-  useEffect(() => {
-    if (isSuccess && data) {
-      setPrevData(data);
+  const { data, isLoading, isError, isSuccess } = useQuery<TmdbResponse, Error>(
+    {
+      queryKey: ["movies", query, page],
+      queryFn: () => fetchMovies(query, page),
+      enabled: !!query,
+      placeholderData: keepPreviousData,
     }
-  }, [data, isSuccess]);
+  );
+
+  const movies = data?.results ?? [];
 
   const handleSearch = (newQuery: string) => {
     setQuery(newQuery);
     setPage(1);
-    setPrevData(null);
   };
 
   const handleSelect = (movie: Movie) => {
@@ -54,10 +44,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (isSuccess && query && data?.results.length === 0) {
+    if (isSuccess && query && movies.length === 0) {
       toast.error("No movies found for your request.");
     }
-  }, [isSuccess, query, data?.results.length]);
+  }, [isSuccess, query, movies.length]);
 
   return (
     <div>
@@ -66,13 +56,13 @@ export default function App() {
       {isLoading && <Loader />}
       {isError && <ErrorMessage />}
 
-      {moviesData.results.length > 0 && (
+      {movies.length > 0 && (
         <>
-          <MovieGrid movies={moviesData.results} onSelect={handleSelect} />
+          <MovieGrid movies={movies} onSelect={handleSelect} />
 
-          {moviesData.total_pages > 1 && (
+          {data && data.total_pages > 1 && (
             <ReactPaginate
-              pageCount={moviesData.total_pages}
+              pageCount={data.total_pages}
               pageRangeDisplayed={5}
               marginPagesDisplayed={1}
               onPageChange={({ selected }) => setPage(selected + 1)}
